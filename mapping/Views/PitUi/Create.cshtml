@@ -1,0 +1,120 @@
+@{
+    ViewData["Title"] = "Create Mapping";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            
+            <a asp-action="Index" class="text-muted text-decoration-none mb-3 d-inline-block fw-bold">
+                <i class="bi bi-arrow-left"></i> Back to Dashboard
+            </a>
+            
+            <div class="card border-0 shadow-sm" style="border-top: 4px solid #D52B1E !important;">
+                <div class="card-header bg-white py-3">
+                    <h5 class="m-0 fw-bold text-danger">Form Input Mapping</h5>
+                </div>
+                <div class="card-body p-4">
+                    <form>
+                        <h6 class="text-secondary text-uppercase small fw-bold mb-3">General Information</h6>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Pit Name (Official)</label>
+                                <input type="text" class="form-control" placeholder="ex: BINTANG">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Pit Code</label>
+                                <input type="text" class="form-control" placeholder="ex: KPC-B01">
+                            </div>
+                        </div>
+
+                        <hr class="text-muted opacity-25 my-4">
+
+                        <h6 class="text-secondary text-uppercase small fw-bold mb-3">Organization Mapping</h6>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Location</label>
+                            <select class="form-select">
+                                <option>Select Location...</option>
+                                <option>Sangatta</option>
+                                <option>Bengalon</option>
+                            </select>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold text-danger">Division</label>
+                                <select class="form-select" id="ddlDivision">
+                                    <option value="">Select Division...</option>
+                                    <option value="MOD - Mine Operation">MOD - Mine Operation</option>
+                                    <option value="TSD - Technical Services">TSD - Technical Services</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Department</label>
+                                <select class="form-select" id="ddlDepartment" disabled>
+                                    <option>Select Division First...</option>
+                                </select>
+                                <div class="form-text text-danger small" id="loadingText" style="display:none;">Loading data...</div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4 bg-light p-3 rounded">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="status" checked>
+                                <label class="form-check-label fw-bold" for="status">Set Status Active</label>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="button" class="btn btn-danger py-2 fw-bold" style="background-color: #D52B1E;">Save Mapping Data</button>
+                            <a asp-action="Index" class="btn btn-light text-muted">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            
+            // Logic Cascading Dropdown
+            $('#ddlDivision').change(function () {
+                var selectedDiv = $(this).val();
+                var deptSelect = $('#ddlDepartment');
+                var loading = $('#loadingText');
+
+                deptSelect.empty(); // Reset
+
+                if (selectedDiv) {
+                    loading.show();
+                    deptSelect.prop('disabled', true);
+                    deptSelect.append('<option>Loading...</option>');
+
+                    // Panggil Controller
+                    $.getJSON('/PitUi/GetDepartments?divisionName=' + encodeURIComponent(selectedDiv), function (data) {
+                        deptSelect.empty();
+                        loading.hide();
+                        deptSelect.append('<option>Select Department...</option>');
+                        
+                        $.each(data, function (index, item) {
+                            deptSelect.append('<option value="' + item.name + '">' + item.name + '</option>');
+                        });
+
+                        deptSelect.prop('disabled', false);
+                    });
+                } else {
+                    deptSelect.append('<option>Select Division First...</option>');
+                    deptSelect.prop('disabled', true);
+                    loading.hide();
+                }
+            });
+
+        });
+    </script>
+}

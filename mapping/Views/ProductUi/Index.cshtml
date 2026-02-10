@@ -1,0 +1,381 @@
+@model IEnumerable<KP_InternalSystem.Models.Product>
+
+@{
+    ViewData["Title"] = "Production Mapping";
+    var totalProducts = ViewBag.TotalProducts ?? 0;
+    var activeProducts = ViewBag.ActiveProducts ?? 0;
+}
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<style>
+    body { background-color: #f4f6f8; font-family: 'Plus Jakarta Sans', sans-serif; letter-spacing: -0.2px; }
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+    .hero-solid { background-color: #D52B1E; box-shadow: 0 4px 20px rgba(213, 43, 30, 0.25); border-radius: 16px; }
+    .card { border: 1px solid rgba(0,0,0,0.04); box-shadow: 0 2px 6px rgba(0,0,0,0.02); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); background-color: #ffffff; }
+    .hover-lift:hover { transform: translateY(-5px); box-shadow: 0 15px 30px -10px rgba(0, 0, 0, 0.1); border-color: rgba(213, 43, 30, 0.3); }
+    .form-control:focus, .form-select:focus { border-color: #D52B1E; box-shadow: 0 0 0 4px rgba(213, 43, 30, 0.1); }
+    .table-responsive { border-radius: 12px; overflow: hidden; background: white; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+    .table thead th { background-color: #f8fafc; color: #64748b; font-weight: 700; font-size: 0.75rem; text-transform: uppercase; border-bottom: 2px solid #e2e8f0; padding: 1rem; }
+    .table-hover tbody tr { transition: background-color 0.2s; }
+    .table-hover tbody tr:hover { background-color: #fff5f5 !important; }
+    
+    .avatar-initial { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 700; color: white; font-size: 1.1rem; margin-right: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    .bg-gradient-red { background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); }
+    .bg-gradient-gray { background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%); }
+    
+    .btn-action-icon { width: 38px; height: 38px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; font-size: 1.1rem; transition: all 0.2s; margin: 0 2px; border: 1px solid transparent; }
+    .btn-edit-trigger { background-color: #f1f5f9; color: #475569; }
+    .btn-edit-trigger:hover { background-color: #D52B1E; color: white !important; box-shadow: 0 4px 10px rgba(213, 43, 30, 0.3); transform: translateY(-2px); }
+    .btn-delete-trigger { background-color: #fef2f2; color: #ef4444; }
+    .btn-delete-trigger:hover { background-color: #dc2626; color: white !important; box-shadow: 0 4px 10px rgba(220, 38, 38, 0.3); transform: translateY(-2px); }
+</style>
+
+<div class="p-4 mb-4 text-white position-relative overflow-hidden hero-solid">
+    <div class="row align-items-center position-relative" style="z-index: 2;">
+        <div class="col-md-8">
+            <h1 class="fw-bold display-6 mb-2">Welcome to Production Mapping</h1>
+            <div class="d-flex flex-column gap-2 mt-3">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-clock-history me-2 opacity-75"></i> 
+                    <span class="opacity-75 me-2">Last updated:</span> 
+                    <span class="fw-bold text-white">@DateTime.Now.ToString("dd MMM yyyy HH:mm")</span>
+                </div>
+                <div class="d-flex align-items-center small">
+                    <i class="bi bi-info-circle me-2 opacity-75"></i> 
+                    <span class="opacity-75 me-2">Last Action:</span> 
+                    <span class="fw-bold text-white">Updated Product List</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 text-end d-none d-md-block">
+            <i class="bi bi-minecart-loaded text-white" style="font-size: 4rem; opacity: 0.15;"></i>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4 g-3">
+    <div class="col-md-4">
+        <div class="card h-100 hover-lift rounded-4 border-0">
+            <div class="card-body d-flex align-items-center p-4">
+                <div class="bg-danger bg-opacity-10 p-3 rounded-circle text-danger me-4" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;"><i class="bi bi-box-seam-fill fs-3"></i></div>
+                <div><h6 class="text-muted mb-1 small fw-bold text-uppercase ls-1">Total Products</h6><h2 class="fw-bold mb-0 text-dark">@totalProducts</h2></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100 hover-lift rounded-4 border-0">
+            <div class="card-body d-flex align-items-center p-4">
+                <div class="bg-success bg-opacity-10 p-3 rounded-circle text-success me-4" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;"><i class="bi bi-check-circle-fill fs-3"></i></div>
+                <div><h6 class="text-muted mb-1 small fw-bold text-uppercase ls-1">Active Status</h6><h2 class="fw-bold mb-0 text-dark">@activeProducts</h2></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <button type="button" class="card h-100 w-100 text-decoration-none hover-lift text-start border-0 rounded-4" style="background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);" onclick="openModal()">
+            <div class="card-body d-flex align-items-center justify-content-between p-4">
+                <div><div class="bg-white rounded-circle d-inline-flex align-items-center justify-content-center mb-0 shadow-sm" style="width: 50px; height: 50px;"><i class="bi bi-plus-lg fs-4 text-dark fw-bold"></i></div></div>
+                <div class="text-end"><span class="fw-bold d-block fs-4 text-white">Add New</span><span class="small text-white opacity-75">Click to create data</span></div>
+            </div>
+        </button>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-4 rounded-4 border-0">
+    <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2 rounded-top-4 px-4">
+        <div><h5 class="fw-bold text-danger m-0"><i class="bi bi-table me-2"></i>Master Data List</h5></div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-success btn-sm fw-bold px-3 rounded-pill" onclick="exportExcel()">
+                <i class="bi bi-file-earmark-excel me-1"></i> Export Excel
+            </button>
+        </div>
+    </div>
+    
+    <div class="card-body bg-light border-bottom py-3 px-4">
+        <div class="row g-2">
+            <div class="col-md-8">
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0 text-secondary ps-3"><i class="bi bi-search"></i></span>
+                    <input type="text" id="searchInput" class="form-control border-start-0 ps-0" placeholder="Type to Search..." autocomplete="off">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <select id="filterStatus" class="form-select">
+                    <option value="">All Status</option>
+                    <option value="ACTIVE">ACTIVE</option>
+                    <option value="INACTIVE">INACTIVE</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-responsive rounded-bottom-4">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th class="ps-4">Product Identity</th>
+                    <th>Aliases (Codes)</th>
+                    <th class="text-center">Status</th>
+                    <th class="text-center">Action</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                @if (Model.Any())
+                {
+                    foreach (var item in Model)
+                    {
+                        var firstLetter = item.ProductName.Substring(0, 1).ToUpper();
+                        var isActive = item.IsActive;
+                        <tr>
+                            <td class="ps-4">
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-initial @(isActive ? "bg-gradient-red" : "bg-gradient-gray")">@firstLetter</div>
+                                    <div>
+                                        <div class="fw-bold text-dark">@item.ProductName</div>
+                                        <div class="d-flex align-items-center gap-2 mt-1"><span class="badge bg-light text-dark border border-secondary" style="font-size: 0.7rem;">CODE: @item.ProductCode</span></div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                @if (item.ProductAliases != null && item.ProductAliases.Any())
+                                {
+                                    <div class="d-flex flex-wrap gap-1">
+                                        @foreach (var alias in item.ProductAliases)
+                                        {
+                                            <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25" style="font-size: 0.7rem;"><i class="bi bi-tag-fill me-1"></i> @alias.AliasName</span>
+                                        }
+                                    </div>
+                                }
+                                else { <span class="text-muted small">-</span> }
+                            </td>
+                            <td class="text-center">
+                                @if(isActive) { <span class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill fw-bold border border-success border-opacity-25">ACTIVE</span> } 
+                                else { <span class="badge bg-secondary bg-opacity-10 text-secondary px-3 py-2 rounded-pill fw-bold border border-secondary border-opacity-25">INACTIVE</span> }
+                            </td>
+                            <td class="text-center">
+                                <button class="btn btn-action-icon btn-edit-trigger" 
+                                        onclick="editProduct('@item.ProductId', '@item.ProductName', '@item.ProductCode', '@string.Join(", ", item.ProductAliases.Select(a => a.AliasName))', '@item.IsActive')">
+                                    <i class="bi bi-pencil-square"></i>
+                                </button>
+                                <button class="btn btn-action-icon btn-delete-trigger" onclick="deleteProduct('@item.ProductId')">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                }
+                else { <tr><td colspan="4" class="text-center py-5 text-muted fst-italic">No products found.</td></tr> }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="modal fade" id="productModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header text-white" style="background-color: #D52B1E;">
+                <h5 class="modal-title fw-bold" id="modalTitle"><i class="bi bi-box-seam me-2"></i> Manage Product</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4 bg-light">
+                <form id="productForm">
+                    <input type="hidden" id="productId" name="id" value="0">
+                    <div class="alert alert-light border shadow-sm small mb-4 d-flex align-items-center text-secondary rounded-3">
+                        <i class="bi bi-info-circle-fill text-danger fs-4 me-3"></i> 
+                        <div>Make sure the Product Code is unique and follows the KPC standard.</div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6"><label class="form-label small fw-bold text-secondary text-uppercase">Product Name <span class="text-danger">*</span></label><input type="text" class="form-control fw-bold py-2" id="productName" name="name" required placeholder="Enter Product Name..."></div>
+                        <div class="col-md-6"><label class="form-label small fw-bold text-secondary text-uppercase">Product Code <span class="text-danger">*</span></label><input type="text" class="form-control fw-bold py-2" id="productCode" name="code" required placeholder="e.g. BB-4200"></div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-secondary text-uppercase">Status</label>
+                        <select class="form-select py-2 fw-bold" id="productStatus" name="isActive">
+                            <option value="true" class="text-success">ACTIVE</option>
+                            <option value="false" class="text-secondary">INACTIVE</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-2">
+                        <label class="form-label small fw-bold text-secondary text-uppercase">Aliases (Comma Separated)</label>
+                        <input type="text" class="form-control border-danger border-opacity-25" id="productAlias" name="aliasStr" placeholder="e.g. Emas Hitam, Black Gold...">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer bg-white border-top-0">
+                <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger px-4 fw-bold" style="background-color: #D52B1E;" onclick="saveProduct()"><i class="bi bi-save me-1"></i> Save Data</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // --- 1. CONFIG LIVE SEARCH ---
+        var debounceTimer;
+        
+        function liveSearch() {
+            var searchVal = $('#searchInput').val();
+            var statusVal = $('#filterStatus').val();
+
+            // Panggil API Controller
+            $.ajax({
+                url: '/ProductUi/GetProductsJson', // Pastikan function ini sudah ada di Controller
+                type: 'GET',
+                data: { search: searchVal, status: statusVal },
+                success: function (data) {
+                    renderTable(data);
+                },
+                error: function(err) {
+                    console.log("Error Live Search: ", err);
+                }
+            });
+        }
+
+        // Trigger saat ngetik (Delay 300ms biar ga spam request)
+        $('#searchInput').on('input', function() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(liveSearch, 300);
+        });
+
+        // Trigger saat ganti status
+        $('#filterStatus').change(function() {
+            liveSearch();
+        });
+
+        // Function Render Table dari JSON
+        function renderTable(data) {
+            var tbody = $('#tableBody');
+            tbody.empty(); // Kosongkan tabel lama
+
+            if (data.length === 0) {
+                tbody.append('<tr><td colspan="4" class="text-center py-5 text-muted fst-italic">No products found.</td></tr>');
+                return;
+            }
+
+            $.each(data, function(i, item) {
+                var firstLetter = item.name.substring(0, 1).toUpperCase();
+                var isActive = item.isActive;
+                var avatarClass = isActive ? "bg-gradient-red" : "bg-gradient-gray";
+                var statusBadge = isActive ? '<span class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill fw-bold border border-success border-opacity-25">ACTIVE</span>' : '<span class="badge bg-secondary bg-opacity-10 text-secondary px-3 py-2 rounded-pill fw-bold border border-secondary border-opacity-25">INACTIVE</span>';
+                
+                // Build Aliases Badge
+                var aliasHtml = '';
+                var aliasesStr = ''; // Untuk parameter tombol edit
+                if(item.aliases && item.aliases.length > 0){
+                    aliasesStr = item.aliases.join(", ");
+                    aliasHtml += '<div class="d-flex flex-wrap gap-1">';
+                    item.aliases.forEach(function(a){
+                        aliasHtml += `<span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25" style="font-size: 0.7rem;"><i class="bi bi-tag-fill me-1"></i> ${a}</span>`;
+                    });
+                    aliasHtml += '</div>';
+                } else {
+                    aliasHtml = '<span class="text-muted small">-</span>';
+                }
+
+                // Construct Row HTML
+                var row = `<tr>
+                    <td class="ps-4">
+                        <div class="d-flex align-items-center">
+                            <div class="avatar-initial ${avatarClass}">${firstLetter}</div>
+                            <div>
+                                <div class="fw-bold text-dark">${item.name}</div>
+                                <div class="d-flex align-items-center gap-2 mt-1"><span class="badge bg-light text-dark border border-secondary" style="font-size: 0.7rem;">CODE: ${item.code}</span></div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>${aliasHtml}</td>
+                    <td class="text-center">${statusBadge}</td>
+                    <td class="text-center">
+                        <button class="btn btn-action-icon btn-edit-trigger" 
+                                onclick="editProduct('${item.id}', '${item.name}', '${item.code}', '${aliasesStr}', '${isActive}')">
+                            <i class="bi bi-pencil-square"></i>
+                        </button>
+                        <button class="btn btn-action-icon btn-delete-trigger" onclick="deleteProduct('${item.id}')">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>
+                </tr>`;
+                
+                tbody.append(row);
+            });
+        }
+        // ------------------------------------------
+
+        function openModal() {
+            document.getElementById('productForm').reset();
+            document.getElementById('productId').value = "0";
+            document.getElementById('productStatus').value = "true"; 
+            document.getElementById('modalTitle').innerHTML = '<i class="bi bi-plus-lg me-2"></i> Add New Product';
+            var myModal = new bootstrap.Modal(document.getElementById('productModal'));
+            myModal.show();
+        }
+
+        function editProduct(id, name, code, aliases, activeStr) {
+            document.getElementById('productId').value = id;
+            document.getElementById('productName').value = name;
+            document.getElementById('productCode').value = code;
+            document.getElementById('productAlias').value = aliases;
+            
+            var isTrue = (activeStr === 'True' || activeStr === true); // Handle bool or string
+            document.getElementById('productStatus').value = isTrue ? "true" : "false";
+
+            document.getElementById('modalTitle').innerHTML = '<i class="bi bi-pencil-square me-2"></i> Edit Product';
+            var myModal = new bootstrap.Modal(document.getElementById('productModal'));
+            myModal.show();
+        }
+
+        function saveProduct() {
+            var formData = new FormData(document.getElementById('productForm'));
+            fetch('/ProductUi/SaveProduct', { method: 'POST', body: formData })
+            .then(async response => {
+                if (response.ok) { 
+                    Swal.fire({
+                        icon: 'success', title: 'Success!', text: 'Data successfully saved.',
+                        showConfirmButton: false, timer: 1500
+                    }).then(() => location.reload());
+                } else { 
+                    const text = await response.text(); 
+                    Swal.fire({ icon: 'error', title: 'Oops...', text: text || 'Something went wrong!', confirmButtonColor: '#D52B1E' });
+                }
+            })
+            .catch(error => { Swal.fire({ icon: 'error', title: 'Network Error', text: 'Cannot connect to server.', confirmButtonColor: '#D52B1E' }); });
+        }
+
+        function deleteProduct(id) {
+            Swal.fire({
+                title: 'Are you sure?', text: "You won't be able to revert this!", icon: 'warning',
+                showCancelButton: true, confirmButtonColor: '#d33', cancelButtonColor: '#6c757d', confirmButtonText: 'Yes, delete it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch('/ProductUi/Delete/' + id, { method: 'POST' })
+                    .then(response => {
+                        if (response.ok) {
+                            Swal.fire('Deleted!', 'Your data has been deleted.', 'success').then(() => { location.reload(); });
+                        } else {
+                            Swal.fire({ icon: 'error', title: 'Failed', text: 'Gagal menghapus data.', confirmButtonColor: '#d33' });
+                        }
+                    })
+                    .catch(error => Swal.fire('Error', 'Terjadi kesalahan sistem.', 'error'));
+                }
+            })
+        }
+
+        function exportExcel() {
+            var search = $('#searchInput').val();
+            var status = $('#filterStatus').val();
+            window.location.href = `/ProductUi/ExportExcel?search=${encodeURIComponent(search)}&status=${status}`;
+        }
+    </script>
+}

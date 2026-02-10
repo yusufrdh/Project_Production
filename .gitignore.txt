@@ -1,0 +1,20 @@
+# --- ASP.NET Sampah ---
+**/bin/
+**/obj/
+**/.vs/
+**/.vscode/
+
+# --- Python/Airflow Sampah ---
+**/__pycache__/
+**/*.pyc
+**/airflow_env/
+**/venv/
+**/.env
+
+# --- File Excel Rahasia ---
+**/*.xlsx
+**/*.xls
+**/*.csv
+
+# --- Log Files ---
+**/*.log

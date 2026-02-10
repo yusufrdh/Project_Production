@@ -1,0 +1,118 @@
+/* KPC Branding Colors */
+:root {
+    --kpc-red: #D52B1E; /* Merah khas KPC */
+    --kpc-white: #ffffff;
+    --kpc-gray: #f8f9fa;
+}
+
+body {
+    background-color: var(--kpc-gray);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Navbar Putih dengan Garis Merah */
+.navbar-kpc {
+    background-color: var(--kpc-white);
+    border-bottom: 3px solid var(--kpc-red);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.navbar-brand {
+    color: var(--kpc-red) !important;
+    font-weight: bold;
+    font-size: 1.5rem;
+}
+
+/* Card Styling */
+.card-kpc {
+    border: none;
+    border-top: 4px solid var(--kpc-red); /* Aksen garis merah di atas card */
+    background: white;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    border-radius: 8px;
+}
+
+.card-header-kpc {
+    background-color: white;
+    color: var(--kpc-red);
+    font-weight: bold;
+    font-size: 1.2rem;
+    border-bottom: 1px solid #eee;
+    padding: 15px 20px;
+}
+
+/* Buttons */
+.btn-kpc {
+    background-color: var(--kpc-red);
+    color: white;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 5px;
+    transition: all 0.3s;
+}
+
+.btn-kpc:hover {
+    background-color: #b01f14; /* Merah lebih gelap */
+    color: white;
+}
+
+.btn-outline-kpc {
+    border: 2px solid var(--kpc-red);
+    color: var(--kpc-red);
+    background: transparent;
+}
+
+.btn-outline-kpc:hover {
+    background: var(--kpc-red);
+    color: white;
+}
+
+/* Table Styling */
+.table-kpc thead th {
+    background-color: var(--kpc-red);
+    color: white;
+    border: none;
+}
+.text-kpc-red {
+    color: var(--kpc-red);
+}
+
+/* --- KPC THEME START --- */
+:root {
+    --kpc-red: #D52B1E;
+    --kpc-white: #ffffff;
+    --kpc-gray: #f8f9fa;
+}
+
+.navbar-kpc {
+    border-bottom: 3px solid var(--kpc-red);
+}
+
+/* Card Style */
+.card-kpc {
+    border: none;
+    border-top: 4px solid var(--kpc-red);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+.card-header-kpc {
+    background-color: white;
+    color: var(--kpc-red);
+    font-weight: bold;
+    font-size: 1.1rem;
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+/* Button Style */
+.btn-kpc {
+    background-color: var(--kpc-red);
+    color: white;
+    border-radius: 4px;
+}
+.btn-kpc:hover {
+    background-color: #b01f14;
+    color: white;
+}
+.text-kpc-red { color: var(--kpc-red) !important; }
+/* --- KPC THEME END --- */

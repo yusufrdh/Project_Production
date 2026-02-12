@@ -23,7 +23,7 @@ namespace KP_InternalSystem.Controllers
             _env = env;
         }
 
-        // --- HELPER LOG KE DATABASE ---
+        // HELPER LOG KE DATABASE 
         private async Task RegisterActivity(string type, string msg)
         {
             try 
@@ -83,8 +83,6 @@ namespace KP_InternalSystem.Controllers
             return File(encoding.GetBytes(builder.ToString()), "text/csv", fileName);
         }
 
-        // Helper Query
-        // Helper Query
         // Helper Query (Digunakan oleh Index & Live Search)
         private async Task<List<object>> GetFilteredPitsQuery(string search, string div, string dept, string status)
         {
@@ -108,10 +106,8 @@ namespace KP_InternalSystem.Controllers
             if (!string.IsNullOrEmpty(status)) query = query.Where(p => p.Status.Trim() == status);
 
             // 3. SORTING ABJAD (A-Z) BERDASARKAN NAMA PIT
-            // Dulu: OrderBy(p => p.PitCode)
-            // Sekarang: OrderBy(p => p.PitNameOfficial)
             var rawData = await query
-                .OrderBy(p => p.PitNameOfficial) // <--- PERUBAHAN DISINI (Urut Abjad Nama)
+                .OrderBy(p => p.PitNameOfficial) // 
                 .ToListAsync();
 
             // 4. Mapping Data ke Object UI
@@ -120,7 +116,6 @@ namespace KP_InternalSystem.Controllers
                 Code = p.PitCode, 
                 Name = p.PitNameOfficial,
                 
-                // Gabung Alias jadi string koma untuk tampilan
                 Alias = p.PitAliases.Any() 
                         ? string.Join(", ", p.PitAliases.Select(a => a.AliasName)) 
                         : "-",
@@ -134,17 +129,48 @@ namespace KP_InternalSystem.Controllers
             return result.Cast<object>().ToList();
         }
 
-        // 4. SAVE (CREATE/EDIT) - FORMAT PESAN DIPERBAIKI DISINI
-        // 4. SAVE (CREATE/EDIT) - DENGAN AUTO SPLIT ALIAS
-        // 4. SAVE (CREATE/EDIT) - DENGAN FIX PIT CODE LOWERCASE
-        [HttpPost]
+        // 4. SAVE (CREATE/EDIT) 
+       [HttpPost]
         public async Task<IActionResult> SavePit(int? id, string name, string alias, string division, string department, string location, string status)
         {
+            
+            int currentId = id ?? 0; 
+
+            // 1. Cek Nama Official Inputan
+            var nameConflict1 = await _context.Pits.AnyAsync(p => p.PitNameOfficial == name && p.PitId != currentId);
+            if (nameConflict1) return BadRequest($"GAGAL: Nama '{name}' sudah dipakai sebagai Nama Official Pit lain!");
+
+            // B. Apakah Nama ini sudah dipakai sebagai ALIAS di pit lain?
+            var nameConflict2 = await _context.PitAliases.AnyAsync(a => a.AliasName == name && a.PitId != currentId);
+            if (nameConflict2) return BadRequest($"GAGAL: Nama '{name}' sudah dipakai sebagai Alias di Pit lain!");
+
+            // 2. Siapkan List Alias Inputan
+            var inputAliases = string.IsNullOrEmpty(alias) 
+                ? new List<string>() 
+                : alias.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                        .Select(a => a.Trim())
+                        .Where(a => !string.IsNullOrWhiteSpace(a))
+                        .Distinct()
+                        .ToList();
+
+            // 3. Cek Setiap Alias Inputan
+            foreach (var aliasItem in inputAliases)
+            {
+                // C. Apakah Alias ini sudah dipakai sebagai ALIAS di pit lain?
+                var aliasConflict1 = await _context.PitAliases.AnyAsync(a => a.AliasName == aliasItem && a.PitId != currentId);
+                if (aliasConflict1) return BadRequest($"GAGAL: Alias '{aliasItem}' sudah dipakai sebagai Alias di Pit lain!");
+
+                // D. Apakah Alias ini sudah dipakai sebagai NAMA OFFICIAL di pit lain?
+                var aliasConflict2 = await _context.Pits.AnyAsync(p => p.PitNameOfficial == aliasItem && p.PitId != currentId);
+                if (aliasConflict2) return BadRequest($"GAGAL: Alias '{aliasItem}' sebenarnya adalah Nama Official dari Pit lain! Jangan duplikat.");
+            }
+
             using var transaction = await _context.Database.BeginTransactionAsync();
-            try {
+            try 
+            {
                 string statusUpper = (status ?? "INACTIVE").ToUpper();
 
-                // 1. Handle Master Data (Location, Div, Dept) - Find or Create
+                // Handle Master Data
                 var loc = await _context.Locations.FirstOrDefaultAsync(l => l.LocationName == location);
                 if (loc == null) { loc = new Location { LocationName = location }; _context.Locations.Add(loc); await _context.SaveChangesAsync(); }
                 
@@ -158,14 +184,10 @@ namespace KP_InternalSystem.Controllers
                 string actionType = "";
                 string msg = "";
 
-                // 2. Handle PIT Data
                 if (id == null || id == 0) {
                     string nextCode = await GenerateNextPitCode();
-                    
                     pitData = new Pit { 
-                        // PERUBAHAN DI SINI: Tambah .ToLower() agar code jadi 'v', 'w', 'aa' (huruf kecil)
                         PitCode = nextCode.ToLower(), 
-                        
                         PitNameOfficial = name, 
                         LocationId = loc.LocationId, 
                         DepartmentId = dept.DepartmentId, 
@@ -174,7 +196,6 @@ namespace KP_InternalSystem.Controllers
                     };
                     _context.Pits.Add(pitData); 
                     await _context.SaveChangesAsync(); 
-
                     actionType = "CREATE";
                     msg = $"Added New Pit: {name} (Code: {pitData.PitCode})"; 
                 } else {
@@ -185,71 +206,35 @@ namespace KP_InternalSystem.Controllers
                     pitData.LocationId = loc.LocationId; 
                     pitData.DepartmentId = dept.DepartmentId; 
                     pitData.Status = statusUpper;
-                    
                     _context.Pits.Update(pitData); 
                     await _context.SaveChangesAsync();
-
                     actionType = "UPDATE";
                     msg = $"Updated Pit Information: {name}"; 
                 }
 
-                // 3. HANDLE ALIAS (Tetap Uppercase Sesuai Request Sebelumnya)
-                var inputAliases = string.IsNullOrEmpty(alias) 
-                    ? new List<string>() 
-                    : alias.Split(',', StringSplitOptions.RemoveEmptyEntries)
-                           .Select(a => a.Trim())
-                           .Where(a => !string.IsNullOrWhiteSpace(a))
-                           .Distinct() // Hindari duplikat input
-                           .ToList();
-
-                // B. Ambil Data Lama dari Database
-                var existingAliases = await _context.PitAliases
-                                                    .Where(a => a.PitId == pitData.PitId)
-                                                    .ToListAsync();
-
-                // C. TAHAP HAPUS: Yang ada di DB, tapi gak ditulis lagi oleh user
-                var aliasesToDelete = existingAliases
-                    .Where(db => !inputAliases.Any(inp => inp.Equals(db.AliasName, StringComparison.OrdinalIgnoreCase)))
-                    .ToList();
+                // Handle Alias CRUD
+                var existingAliases = await _context.PitAliases.Where(a => a.PitId == pitData.PitId).ToListAsync();
                 
-                if (aliasesToDelete.Any()) {
-                    _context.PitAliases.RemoveRange(aliasesToDelete);
-                }
+                var aliasesToDelete = existingAliases.Where(db => !inputAliases.Any(inp => inp.Equals(db.AliasName, StringComparison.OrdinalIgnoreCase))).ToList();
+                if (aliasesToDelete.Any()) _context.PitAliases.RemoveRange(aliasesToDelete);
 
-                // D. TAHAP TAMBAH / UPDATE
                 foreach (var inputName in inputAliases)
                 {
-                    // Cek apakah nama ini udah ada di DB (Case Insensitive)
                     var existingItem = existingAliases.FirstOrDefault(db => db.AliasName.Equals(inputName, StringComparison.OrdinalIgnoreCase));
-
-                    if (existingItem != null)
-                    {
-                        // KASUS 1: BARANG LAMA (ID AMAN)
-                        // Cek kalau user ganti casing (misal: "lignite" jadi "Lignite") -> Kita update text-nya aja
-                        if (existingItem.AliasName != inputName) 
-                        {
+                    if (existingItem != null) {
+                        if (existingItem.AliasName != inputName) { 
                             existingItem.AliasName = inputName;
-                            // Gak perlu .Update() eksplisit kadang, tapi biar aman:
                             _context.Entry(existingItem).State = EntityState.Modified;
                         }
-                        // Kalau sama persis, dia gak bakal diapa-apain (ID Tetap 55, 56, dst)
-                    }
-                    else
-                    {
-                        // KASUS 2: BARANG BARU -> INSERT
-                        _context.PitAliases.Add(new PitAlias { 
-                            PitId = pitData.PitId, 
-                            AliasName = inputName 
-                        });
+                    } else {
+                        _context.PitAliases.Add(new PitAlias { PitId = pitData.PitId, AliasName = inputName });
                     }
                 }
                 
                 await _context.SaveChangesAsync();
-                
-                // 4. Log Activity
                 await RegisterActivity(actionType, msg); 
-
                 await transaction.CommitAsync();
+                
                 return Ok(new { success = true });
             }
             catch (Exception ex) { 
@@ -258,7 +243,7 @@ namespace KP_InternalSystem.Controllers
             }
         }
 
-        // 5. DELETE - FORMAT PESAN DIPERBAIKI DISINI
+        // 5. DELETE 
         [HttpPost]
         public async Task<IActionResult> DeletePit(int id)
         {
@@ -268,7 +253,7 @@ namespace KP_InternalSystem.Controllers
                 var aliases = _context.PitAliases.Where(a => a.PitId == id);
                 _context.PitAliases.RemoveRange(aliases); _context.Pits.Remove(pit); await _context.SaveChangesAsync();
                 
-                // GANTI FORMAT PESAN DISINI
+
                 await RegisterActivity("DELETE", $"Deleted Pit: {name}");
                 
                 return Ok(new { success = true });
@@ -285,10 +270,6 @@ namespace KP_InternalSystem.Controllers
             return Json(await _context.Departments.Where(d => d.DivisionId == div.DivisionId).Select(d => new { name = d.DepartmentName }).ToListAsync());
         }
 
-
-        // ==============================================================
-        // MASTER DATA MANAGEMENT (DIVISI, DEPARTEMEN, LOKASI)
-        // ==============================================================
 
         // 1. MANAGE DIVISION
         [HttpPost]
@@ -312,7 +293,6 @@ namespace KP_InternalSystem.Controllers
         {
             var item = await _context.Divisions.FindAsync(id);
             if (item != null) {
-                // Cek relasi dulu (Opsional: Cegah hapus jika dipakai)
                 _context.Divisions.Remove(item);
                 await RegisterActivity("DELETE", $"Deleted Division: {item.DivisionName}");
                 await _context.SaveChangesAsync();
@@ -353,7 +333,7 @@ namespace KP_InternalSystem.Controllers
 
         // 3. MANAGE DEPARTMENT
         [HttpPost]
-        public async Task<IActionResult> SaveMasterDepartment(int? id, string name, string divisionName) // Pakai nama divisi untuk mempermudah mapping
+        public async Task<IActionResult> SaveMasterDepartment(int? id, string name, string divisionName) 
         {
             if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(divisionName)) return BadRequest("Data required");
 

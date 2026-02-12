@@ -22,8 +22,6 @@ x-airflow-common:
     - ./airflow_production/dags:/opt/airflow/dags
     - ./airflow_production/config:/opt/airflow/config
     - ./airflow_production/plugins:/opt/airflow/plugins
-    
-   
     - ./data_source:/opt/airflow/data_kpc
     
   user: "${AIRFLOW_UID:-50000}:0"
